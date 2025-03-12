@@ -3,13 +3,13 @@ pipeline {
     
     environment {
         AWS_REGION = 'us-west-2'
-        ECR_REPOSITORY = 'ecommerce-webapp'
+        ECR_REPOSITORY = 'my-ecommerce-app'
         TERRAFORM_DIR = "${WORKSPACE}/TerraformDeployment"
         WEBAPP_DIR = "${WORKSPACE}/webapp"
         IMAGE_TAG = "v${BUILD_NUMBER}-${GIT_COMMIT.substring(0,7)}"
         ECR_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
         FULL_IMAGE_URL = "${ECR_URL}/${ECR_REPOSITORY}:${IMAGE_TAG}"
-        AWS_CREDS = credentials('aws-credentials')
+        AWS_CREDS = credentials('my-aws-credential')
         TFVARS_FILE = "${TERRAFORM_DIR}/terraform.tfvars"
     }
     
@@ -103,7 +103,7 @@ pipeline {
                     echo "Building Docker image from ${WEBAPP_DIR}"
                     
                     withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', 
-                                    credentialsId: 'aws-credentials', 
+                                    credentialsId: 'my-aws-credential', 
                                     accessKeyVariable: 'AWS_ACCESS_KEY_ID', 
                                     secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
                         sh """
@@ -137,7 +137,7 @@ pipeline {
                         echo "Attempting to retrieve current image from Terraform state"
                         try {
                             withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', 
-                                            credentialsId: 'aws-credentials', 
+                                            credentialsId: 'my-aws-credential', 
                                             accessKeyVariable: 'AWS_ACCESS_KEY_ID', 
                                             secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
                                 def currentImage = sh(
@@ -172,7 +172,7 @@ pipeline {
                             echo "No existing image found, will need to build a new one"
                             dir("${WEBAPP_DIR}") {
                                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', 
-                                                credentialsId: 'aws-credentials', 
+                                                credentialsId: 'my-aws-credential', 
                                                 accessKeyVariable: 'AWS_ACCESS_KEY_ID', 
                                                 secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
                                     sh """
@@ -220,7 +220,7 @@ pipeline {
         stage('Terraform Plan') {
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', 
-                                credentialsId: 'aws-credentials', 
+                                credentialsId: 'my-aws-credential', 
                                 accessKeyVariable: 'AWS_ACCESS_KEY_ID', 
                                 secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
                     dir("${TERRAFORM_DIR}") {
@@ -252,7 +252,7 @@ pipeline {
         stage('Terraform Apply') {
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', 
-                                credentialsId: 'aws-credentials', 
+                                credentialsId: 'my-aws-credential', 
                                 accessKeyVariable: 'AWS_ACCESS_KEY_ID', 
                                 secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
                     dir("${TERRAFORM_DIR}") {
@@ -268,7 +268,7 @@ pipeline {
         stage('Verify Deployment') {
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', 
-                                credentialsId: 'aws-credentials', 
+                                credentialsId: 'my-aws-credential', 
                                 accessKeyVariable: 'AWS_ACCESS_KEY_ID', 
                                 secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
                     script {
