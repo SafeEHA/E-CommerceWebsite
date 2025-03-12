@@ -360,4 +360,3 @@ pipeline {
             cleanWs()
         }
     }
-}
