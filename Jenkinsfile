@@ -13,46 +13,47 @@ pipeline {
         TFVARS_FILE = "${TERRAFORM_DIR}/terraform.tfvars"
     }
     
-    stages {
-        stage('Initialize') {
-            steps {
-                echo "Starting pipeline for E-Commerce Website deployment"
-                sh 'aws --version'
-                sh 'docker --version'
-                sh 'terraform --version'
+    stage('Initialize') {
+    steps {
+        echo "Starting pipeline for E-Commerce Website deployment"
+        sh 'aws --version'
+        sh 'docker --version'
+        sh 'terraform --version'
+        
+        // Set up AWS credentials
+        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', 
+                          credentialsId: 'my-aws-credential',
+                          accessKeyVariable: 'AWS_ACCESS_KEY_ID', 
+                          secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+            script {
+                // Get AWS account ID directly into a variable
+                def awsAccountId = sh(
+                    script: 'aws sts get-caller-identity --query Account --output text',
+                    returnStdout: true
+                ).trim()
                 
-                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', 
-                  credentialsId: 'my-aws-credential', 
-                  keyIdVariable: 'AWS_ACCESS_KEY_ID',  // Changed from accessKeyVariable
-                  secretVariable: 'AWS_SECRET_ACCESS_KEY']]) {  // Changed from secretKeyVariable
-                    script {
-                        // Get AWS account ID
-                        env.AWS_ACCOUNT_ID = sh(
-                            script: 'aws sts get-caller-identity --query Account --output text',
-                            returnStdout: true
-                        ).trim()
-                        
-                        // Now set the dependent variables
-                        env.ECR_URL = "${env.AWS_ACCOUNT_ID}.dkr.ecr.${env.AWS_REGION}.amazonaws.com"
-                        env.FULL_IMAGE_URL = "${env.ECR_URL}/${env.ECR_REPOSITORY}:${env.IMAGE_TAG}"
-                        
-                        echo "Using AWS Account ID: ${env.AWS_ACCOUNT_ID}"
-                        echo "ECR URL: ${env.ECR_URL}"
-                        
-                        // Use the variables directly in the script block
-                        sh """
-                            export AWS_DEFAULT_REGION=${env.AWS_REGION}
-                            
-                            # Login to ECR
-                            aws ecr get-login-password --region ${env.AWS_REGION} | docker login --username AWS --password-stdin ${env.ECR_URL}
-                            
-                            # Ensure ECR repository exists
-                            aws ecr describe-repositories --repository-names ${env.ECR_REPOSITORY} || aws ecr create-repository --repository-name ${env.ECR_REPOSITORY}
-                        """
-                    }
-                }                
+                // Set URLs directly in the script
+                def ecrUrl = "${awsAccountId}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+                def fullImageUrl = "${ecrUrl}/${ECR_REPOSITORY}:${IMAGE_TAG}"
+                
+                echo "Using AWS Account ID: ${awsAccountId}"
+                echo "ECR URL: ${ecrUrl}"
+                
+                // Now use these variables directly in the shell commands
+                sh """
+                    export AWS_DEFAULT_REGION=${AWS_REGION}
+                    aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ecrUrl}
+                    aws ecr describe-repositories --repository-names ${ECR_REPOSITORY} || aws ecr create-repository --repository-name ${ECR_REPOSITORY}
+                """
+                
+                // Now update the environment variables for the rest of the pipeline
+                env.AWS_ACCOUNT_ID = awsAccountId
+                env.ECR_URL = ecrUrl
+                env.FULL_IMAGE_URL = fullImageUrl
             }
         }
+    }
+}
         
         stage('Detect Changes') {
             steps {
