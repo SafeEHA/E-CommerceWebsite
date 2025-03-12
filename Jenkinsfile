@@ -5,7 +5,7 @@ pipeline {
         AWS_REGION = 'us-west-2'
         AWS_ACCOUNT_ID = '205930632952'
         ECR_REPOSITORY = 'my-ecommerce-app'
-        TERRAFORM_DIR = "${WORKSPACE}/TerraformDeployment"
+        TERRAFORM_DIR = "${WORKSPACE}/TerraformDep"
         WEBAPP_DIR = "${WORKSPACE}/webapp"
         IMAGE_TAG = "v${BUILD_NUMBER}-${GIT_COMMIT.substring(0,7)}"
         ECR_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
@@ -225,6 +225,7 @@ pipeline {
                                 accessKeyVariable: 'AWS_ACCESS_KEY_ID', 
                                 secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
                     dir("${TERRAFORM_DIR}") {
+                    
                         sh '''
                             export AWS_DEFAULT_REGION=${AWS_REGION}
                             terraform init -input=false
