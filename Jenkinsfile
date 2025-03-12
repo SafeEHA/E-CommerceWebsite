@@ -3,6 +3,7 @@ pipeline {
     
     environment {
         AWS_REGION = 'us-west-2'
+        AWS_ACCOUNT_ID = '205930632952'
         ECR_REPOSITORY = 'my-ecommerce-app'
         TERRAFORM_DIR = "${WORKSPACE}/TerraformDeployment"
         WEBAPP_DIR = "${WORKSPACE}/webapp"
@@ -22,35 +23,20 @@ pipeline {
         
         // Set up AWS credentials
         withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', 
-                          credentialsId: 'my-aws-credential',
+                          credentialsId: 'my-aws-credential', 
                           accessKeyVariable: 'AWS_ACCESS_KEY_ID', 
                           secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
-            script {
-                // Get AWS account ID directly into a variable
-                def awsAccountId = sh(
-                    script: 'aws sts get-caller-identity --query Account --output text',
-                    returnStdout: true
-                ).trim()
+         
+            sh '''
+                export AWS_DEFAULT_REGION=${AWS_REGION}
                 
-                // Set URLs directly in the script
-                def ecrUrl = "${awsAccountId}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-                def fullImageUrl = "${ecrUrl}/${ECR_REPOSITORY}:${IMAGE_TAG}"
+                # Login to ECR
+                aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_URL}
                 
-                echo "Using AWS Account ID: ${awsAccountId}"
-                echo "ECR URL: ${ecrUrl}"
-                
-                // Now use these variables directly in the shell commands
-                sh """
-                    export AWS_DEFAULT_REGION=${AWS_REGION}
-                    aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ecrUrl}
-                    aws ecr describe-repositories --repository-names ${ECR_REPOSITORY} || aws ecr create-repository --repository-name ${ECR_REPOSITORY}
-                """
-                
-                // Now update the environment variables for the rest of the pipeline
-                env.AWS_ACCOUNT_ID = awsAccountId
-                env.ECR_URL = ecrUrl
-                env.FULL_IMAGE_URL = fullImageUrl
-            }
+                # Ensure ECR repository exists
+                aws ecr describe-repositories --repository-names ${ECR_REPOSITORY} || \
+                aws ecr create-repository --repository-name ${ECR_REPOSITORY}
+            '''
         }
     }
 }
