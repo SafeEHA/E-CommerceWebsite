@@ -44,7 +44,7 @@ pipeline {
                         export AWS_DEFAULT_REGION=${AWS_REGION}
                         
                         # Login to ECR
-                        aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_URL}
+                        aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${env.ECR_URL}
                         
                         # Ensure ECR repository exists
                         aws ecr describe-repositories --repository-names ${ECR_REPOSITORY} || \
