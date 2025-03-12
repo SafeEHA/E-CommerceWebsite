@@ -13,32 +13,32 @@ pipeline {
         AWS_CREDS = credentials('my-aws-credential')
         TFVARS_FILE = "${TERRAFORM_DIR}/terraform.tfvars"
     }
-    
-    stage('Initialize') {
-    steps {
-        echo "Starting pipeline for E-Commerce Website deployment"
-        sh 'aws --version'
-        sh 'docker --version'
-        sh 'terraform --version'
-        
-        // Set up AWS credentials
-        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', 
-                          credentialsId: 'my-aws-credential', 
-                          accessKeyVariable: 'AWS_ACCESS_KEY_ID', 
-                          secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
-         
-            sh '''
-                export AWS_DEFAULT_REGION=${AWS_REGION}
-                
-                # Login to ECR
-                aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_URL}
-                
-                # Ensure ECR repository exists
-                aws ecr describe-repositories --repository-names ${ECR_REPOSITORY} || \
-                aws ecr create-repository --repository-name ${ECR_REPOSITORY}
-            '''
+    stages{
+        stage('Initialize') {
+        steps {
+            echo "Starting pipeline for E-Commerce Website deployment"
+            sh 'aws --version'
+            sh 'docker --version'
+            sh 'terraform --version'
+            
+            // Set up AWS credentials
+            withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', 
+                            credentialsId: 'my-aws-credential', 
+                            accessKeyVariable: 'AWS_ACCESS_KEY_ID', 
+                            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+            
+                sh '''
+                    export AWS_DEFAULT_REGION=${AWS_REGION}
+                    
+                    # Login to ECR
+                    aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_URL}
+                    
+                    # Ensure ECR repository exists
+                    aws ecr describe-repositories --repository-names ${ECR_REPOSITORY} || \
+                    aws ecr create-repository --repository-name ${ECR_REPOSITORY}
+                '''
+            }
         }
-    }
 }
         
         stage('Detect Changes') {
@@ -360,3 +360,4 @@ pipeline {
             cleanWs()
         }
     }
+}
