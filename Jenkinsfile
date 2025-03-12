@@ -21,11 +21,10 @@ pipeline {
                 sh 'docker --version'
                 sh 'terraform --version'
                 
-                // Set up AWS credentials
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', 
-                                  credentialsId: 'my-aws-credential', 
-                                  accessKeyVariable: 'AWS_ACCESS_KEY_ID', 
-                                  secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+                  credentialsId: 'my-aws-credential', 
+                  keyIdVariable: 'AWS_ACCESS_KEY_ID',  // Changed from accessKeyVariable
+                  secretVariable: 'AWS_SECRET_ACCESS_KEY']]) {  // Changed from secretKeyVariable
                     script {
                         // Get AWS account ID
                         env.AWS_ACCOUNT_ID = sh(
@@ -39,18 +38,19 @@ pipeline {
                         
                         echo "Using AWS Account ID: ${env.AWS_ACCOUNT_ID}"
                         echo "ECR URL: ${env.ECR_URL}"
+                        
+                        // Use the variables directly in the script block
+                        sh """
+                            export AWS_DEFAULT_REGION=${env.AWS_REGION}
+                            
+                            # Login to ECR
+                            aws ecr get-login-password --region ${env.AWS_REGION} | docker login --username AWS --password-stdin ${env.ECR_URL}
+                            
+                            # Ensure ECR repository exists
+                            aws ecr describe-repositories --repository-names ${env.ECR_REPOSITORY} || aws ecr create-repository --repository-name ${env.ECR_REPOSITORY}
+                        """
                     }
-                    sh '''
-                        export AWS_DEFAULT_REGION=${AWS_REGION}
-                        
-                        # Login to ECR
-                        aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${env.ECR_URL}
-                        
-                        # Ensure ECR repository exists
-                        aws ecr describe-repositories --repository-names ${ECR_REPOSITORY} || \
-                        aws ecr create-repository --repository-name ${ECR_REPOSITORY}
-                    '''
-                }
+                }                
             }
         }
         
