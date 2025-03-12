@@ -26,6 +26,20 @@ pipeline {
                                   credentialsId: 'my-aws-credential', 
                                   accessKeyVariable: 'AWS_ACCESS_KEY_ID', 
                                   secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+                    script {
+                        // Get AWS account ID
+                        env.AWS_ACCOUNT_ID = sh(
+                            script: 'aws sts get-caller-identity --query Account --output text',
+                            returnStdout: true
+                        ).trim()
+                        
+                        // Now set the dependent variables
+                        env.ECR_URL = "${env.AWS_ACCOUNT_ID}.dkr.ecr.${env.AWS_REGION}.amazonaws.com"
+                        env.FULL_IMAGE_URL = "${env.ECR_URL}/${env.ECR_REPOSITORY}:${env.IMAGE_TAG}"
+                        
+                        echo "Using AWS Account ID: ${env.AWS_ACCOUNT_ID}"
+                        echo "ECR URL: ${env.ECR_URL}"
+                    }
                     sh '''
                         export AWS_DEFAULT_REGION=${AWS_REGION}
                         
