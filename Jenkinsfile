@@ -28,6 +28,7 @@ pipeline {
                             terraform init
                             terraform apply -auto-approve
                             aws eks update-kubeconfig --name ${EKS_CLUSTER_NAME} --region ${AWS_REGION}
+                            terraform destroy -auto-approve
                         '''
                     }
                 }
@@ -95,34 +96,6 @@ pipeline {
             }
         }
 
-        stage('Clean Up Kubernetes Resources') {
-            steps {
-                script {
-                    // Delete the deployment
-                    sh 'kubectl delete deployment ecommerce-app --ignore-not-found=true'
-                    
-                    // Delete the service
-                    sh 'kubectl delete service ecommerce-app --ignore-not-found=true'
-                }
-            }
-        }
-
-        stage('Terraform Destroy') {
-            steps {
-                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', 
-                                   credentialsId: "${AWS_CREDENTIALS}",
-                                   accessKeyVariable: 'AWS_ACCESS_KEY_ID', 
-                                   secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
-                    dir("${TERRAFORM_DIR}") {
-                        // Initialize Terraform
-                        sh 'terraform init'
-                        
-                        // Destroy the infrastructure
-                        sh 'terraform destroy -auto-approve'
-                    }
-                }
-            }
-        }
     }
     
     post {
