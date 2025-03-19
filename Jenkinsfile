@@ -5,7 +5,7 @@ pipeline {
         AWS_REGION = 'us-west-2'
         ECR_REPOSITORY_NAME = 'ecommerce-app'
         AWS_CREDENTIALS = 'my-aws-credentials'
-        EKS_CLUSTER_NAME = 'eks_cluster'
+        EKS_CLUSTER_NAME = 'my-eks-cluster'
         IMAGE_TAG = "${env.BUILD_NUMBER}"
         TERRAFORM_DIR = 'TerraformDep'
     }
