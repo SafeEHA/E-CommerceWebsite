@@ -51,7 +51,7 @@ pipeline {
                         fi
                         
                         # Build image
-                        docker build -t ${ECR_REPOSITORY_URI}:${IMAGE_TAG} -f webapp/Dockerfile .
+                        docker build -t ${ECR_REPOSITORY_URI}:${IMAGE_TAG} -f webapp/Dockerfile webapp
                         
                         # Login to ECR and push
                         aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REPOSITORY_URI}
