@@ -109,12 +109,17 @@ pipeline {
 
         stage('Terraform Destroy') {
             steps {
-                dir("${TERRAFORM_DIR}") {
-                    // Initialize Terraform
-                    sh 'terraform init'
-                    
-                    // Destroy the infrastructure
-                    sh 'terraform destroy -auto-approve'
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', 
+                                   credentialsId: "${AWS_CREDENTIALS}",
+                                   accessKeyVariable: 'AWS_ACCESS_KEY_ID', 
+                                   secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+                    dir("${TERRAFORM_DIR}") {
+                        // Initialize Terraform
+                        sh 'terraform init'
+                        
+                        // Destroy the infrastructure
+                        sh 'terraform destroy -auto-approve'
+                    }
                 }
             }
         }
