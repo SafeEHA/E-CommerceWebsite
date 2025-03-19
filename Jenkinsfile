@@ -94,18 +94,14 @@ pipeline {
                 }
             }
         }
-        stage('Destroy Kubernetes Resources') {
+        stage('Terraform Destroy') {
             steps {
-                script {
-                    // Delete the deployment
-                    sh 'kubectl delete deployment ecommerce-app --ignore-not-found=true'
+                dir("${TERRAFORM_DIR}") {
+                    // Initialize Terraform
+                    sh 'terraform init'
                     
-                    // Delete the service
-                    sh 'kubectl delete service ecommerce-app --ignore-not-found=true'
-                    
-                    // Optionally, delete other resources (e.g., ConfigMaps, Secrets)
-                    sh 'kubectl delete configmap my-config --ignore-not-found=true'
-                    sh 'kubectl delete secret my-secret --ignore-not-found=true'
+                    // Destroy the infrastructure
+                    sh 'terraform destroy -auto-approve'
                 }
             }
         }
