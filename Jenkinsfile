@@ -9,7 +9,7 @@ pipeline {
         WEBAPP_DIR = "${WORKSPACE}/webapp"
         IMAGE_TAG = "v${BUILD_NUMBER}-${GIT_COMMIT.substring(0,7)}"
         ECR_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-        FULL_IMAGE_URL = "${ECR_URL}/${ECR_REPOSITORY}:${IMAGE_TAG}"
+        // FULL_IMAGE_URL = "${ECR_URL}/${ECR_REPOSITORY}:${IMAGE_TAG}"
         AWS_CREDS = credentials('my-aws-credential')
         TFVARS_FILE = "${TERRAFORM_DIR}/terraform.tfvars"
     }
