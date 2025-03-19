@@ -45,9 +45,10 @@ pipeline {
                         AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
                         ECR_REPOSITORY_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY_NAME}"
                         
-                        # Create ECR repository if it doesn't exist
-                        aws ecr describe-repositories --repository-names ${ECR_REPOSITORY_NAME} --region ${AWS_REGION} || \
-                        aws ecr create-repository --repository-name ${ECR_REPOSITORY_NAME} --region ${AWS_REGION}
+                        # Check if ECR repository exists; if not, create it
+                        if ! aws ecr describe-repositories --repository-names ${ECR_REPOSITORY_NAME} --region ${AWS_REGION} > /dev/null 2>&1; then
+                            aws ecr create-repository --repository-name ${ECR_REPOSITORY_NAME} --region ${AWS_REGION}
+                        fi
                         
                         # Build image
                         docker build -t ${ECR_REPOSITORY_URI}:${IMAGE_TAG} .
