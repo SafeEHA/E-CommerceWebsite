@@ -94,6 +94,19 @@ pipeline {
                 }
             }
         }
+
+        stage('Clean Up Kubernetes Resources') {
+            steps {
+                script {
+                    // Delete the deployment
+                    sh 'kubectl delete deployment ecommerce-app --ignore-not-found=true'
+                    
+                    // Delete the service
+                    sh 'kubectl delete service ecommerce-app --ignore-not-found=true'
+                }
+            }
+        }
+
         stage('Terraform Destroy') {
             steps {
                 dir("${TERRAFORM_DIR}") {
