@@ -298,6 +298,11 @@ resource "kubernetes_service" "app_service" {
     metadata {
         name      = "eks-app-service"
         namespace = "default"
+        annotations = {
+            "service.beta.kubernetes.io/aws-load-balancer-type"   = "external"
+            "service.beta.kubernetes.io/aws-load-balancer-scheme" = "internet-facing"
+            "service.beta.kubernetes.io/aws-load-balancer-nlb-target-type" = "ip"
+        }
     }
     spec {
         selector = {
@@ -306,9 +311,12 @@ resource "kubernetes_service" "app_service" {
         port {
             port        = 80
             target_port = 80
+            protocol    = "TCP"
         }
-        type = var.service_type
+        type                    = "LoadBalancer"
+        load_balancer_class     = "service.k8s.aws/nlb"
     }
+    wait_for_load_balancer = false
     depends_on = [
         kubernetes_deployment.app,
         time_sleep.wait_for_lb_controller
